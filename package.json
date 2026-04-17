@@ -1,0 +1,59 @@
+{
+  "name": "kyudowatchface",
+  "author": "",
+  "version": "0.1.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "Kyudo",
+    "versionLabel": "0.2",
+    "uuid": "a3c8f2e1-4b9d-4c7a-9e6f-1d2b3c4d5e6f",
+    "projectType": "moddable",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "gabbro"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [
+      "dummy"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "IMAGE_KYUDO_0",
+          "file": "img/kyudo-0.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_KYUDO_1",
+          "file": "img/kyudo-1.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_KYUDO_2",
+          "file": "img/kyudo-2.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_KYUDO_3",
+          "file": "img/kyudo-3.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_KYUDO_4",
+          "file": "img/kyudo-4.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "IMAGE_KYUDO_5",
+          "file": "img/kyudo-5.png"
+        }
+      ]
+    }
+  }
+}
