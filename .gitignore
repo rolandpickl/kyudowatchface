@@ -1,1 +1,8 @@
 /build
+/.lock-waf_linux_build
+/node_modules/.package-lock.json
+/.idea/kyudowatchface.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/node_modules/@moddable/pebbleproxy/proxy.js
+/.idea/vcs.xml
