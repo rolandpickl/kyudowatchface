@@ -1,6 +1,7 @@
 import Poco from "commodetto/Poco";
 import parseBMF from "commodetto/parseBMF";
 import parseRLE from "commodetto/parseRLE";
+import Battery from "embedded:sensor/Battery";
 
 const render = new Poco(screen);
 
@@ -38,6 +39,10 @@ let kyudoFrameBitmaps = null;
 let cachedKyudoIndex = -1;
 let cachedKyudoBitmap = null;
 
+let batteryPercent = 100;
+
+const batteryReader = new Battery({});
+
 const KYUDO_INTERVAL_SEC = 10;
 
 function getKyudoBitmap(idx) {
@@ -70,6 +75,19 @@ function getKyudoBitmap(idx) {
 function frameIndexForTime(date) {
 	const secs = date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds();
 	return Math.floor(secs / KYUDO_INTERVAL_SEC) % FRAME_COUNT;
+}
+
+function drawBatteryBar(rw) {
+	const margin = 100;
+	const barH = 6;
+	const barY = 26;
+	const barW = rw - 2 * margin;
+	const fill = Math.round(barW * batteryPercent / 100);
+	const fillColor = batteryPercent <= 20 ? red : green;
+
+	render.fillRectangle(black, margin - 1, barY - 1, barW + 2, barH + 2);
+	render.fillRectangle(white, margin, barY, barW, barH);
+	if (fill > 0) render.fillRectangle(fillColor, margin, barY, fill, barH);
 }
 
 /**
@@ -142,6 +160,9 @@ function draw(e) {
 		return;
 	}
 
+	const bs = batteryReader.sample();
+	if (bs) batteryPercent = bs.percent;
+
 	const idx = frameIndexForTime(date);
 	const bitmap = getKyudoBitmap(idx);
 	if (!bitmap) {
@@ -157,10 +178,12 @@ function draw(e) {
 	const by = Math.floor((rh - bitmap.height) / 2);
 	render.drawBitmap(bitmap, bx, by);
 
+	drawBatteryBar(rw);
 	drawAnalogClock(date, rw, rh);
 
 	render.end();
 }
+
 
 watch.addEventListener("secondchange", draw);
 watch.addEventListener("resize", draw);

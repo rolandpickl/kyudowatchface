@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "keywords": ["pebble-app"],
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@moddable/pebbleproxy": "^0.1.7"
+  },
   "pebble": {
     "displayName": "Kyudo",
     "versionLabel": "0.2",
@@ -14,6 +16,9 @@
     "enableMultiJS": true,
     "targetPlatforms": [
       "gabbro"
+    ],
+    "capabilities": [
+      "location"
     ],
     "watchapp": {
       "watchface": true
