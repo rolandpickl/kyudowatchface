@@ -30,46 +30,36 @@ const FRAME_RESOURCE_IDS = [1, 2, 3, 4, 5, 6];
  * 10s slot changes (less heap churn / fragmentation). Uses ~6× one frame in RAM.
  * If preloading OOMs at startup, set to false to keep only the current frame decoded.
  */
-const PRELOAD_KYUDO_FRAMES = false;
-
-/** Preloaded frames (PRELOAD_KYUDO_FRAMES), or null before first load / after failed preload. */
-let kyudoFrameBitmaps = null;
-
-/** Lazy path: only reload native bitmap when the 10s kyudo slot changes. */
-let cachedKyudoIndex = -1;
-let cachedKyudoBitmap = null;
-
 let batteryPercent = 100;
+let batteryCharging = false;
 
 const batteryReader = new Battery({});
 
 const KYUDO_INTERVAL_SEC = 10;
 
+let cachedBitmap = null;
+let cachedIdx = -1;
+
 function getKyudoBitmap(idx) {
-	if (PRELOAD_KYUDO_FRAMES) {
-		if (!kyudoFrameBitmaps) {
-			const a = [];
-			for (let i = 0; i < FRAME_COUNT; i++) {
-				try {
-					a[i] = new Poco.PebbleBitmap(FRAME_RESOURCE_IDS[i]);
-				} catch {
-					a[i] = null;
-				}
-			}
-			kyudoFrameBitmaps = a;
-		}
-		return kyudoFrameBitmaps[idx];
+	if (idx === cachedIdx && cachedBitmap) return cachedBitmap;
+
+	// Frame changed: hand back the old bitmap for one more draw, then drop our
+	// reference so the GC destructor can free its native memory before the next
+	// call allocates the replacement (old + new must never coexist in RAM).
+	if (cachedBitmap) {
+		const prev = cachedBitmap;
+		cachedBitmap = null;
+		cachedIdx = idx; // next call: same idx, null bitmap → will allocate
+		return prev;
 	}
-	if (idx !== cachedKyudoIndex) {
-		cachedKyudoBitmap = null;
-		try {
-			cachedKyudoBitmap = new Poco.PebbleBitmap(FRAME_RESOURCE_IDS[idx]);
-			cachedKyudoIndex = idx;
-		} catch {
-			cachedKyudoIndex = idx;
-		}
+
+	try {
+		cachedBitmap = new Poco.PebbleBitmap(FRAME_RESOURCE_IDS[idx]);
+		cachedIdx = idx;
+		return cachedBitmap;
+	} catch {
+		return null;
 	}
-	return cachedKyudoBitmap;
 }
 
 function frameIndexForTime(date) {
@@ -83,7 +73,7 @@ function drawBatteryBar(rw) {
 	const barY = 26;
 	const barW = rw - 2 * margin;
 	const fill = Math.round(barW * batteryPercent / 100);
-	const fillColor = batteryPercent <= 20 ? red : green;
+	const fillColor = batteryCharging ? white : (batteryPercent <= 20 ? red : green);
 
 	render.fillRectangle(black, margin - 1, barY - 1, barW + 2, barH + 2);
 	render.fillRectangle(white, margin, barY, barW, barH);
@@ -161,7 +151,7 @@ function draw(e) {
 	}
 
 	const bs = batteryReader.sample();
-	if (bs) batteryPercent = bs.percent;
+	if (bs) { batteryPercent = bs.percent; batteryCharging = bs.charging; }
 
 	const idx = frameIndexForTime(date);
 	const bitmap = getKyudoBitmap(idx);
