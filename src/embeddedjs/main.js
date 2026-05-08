@@ -2,6 +2,7 @@ import Poco from "commodetto/Poco";
 import parseBMF from "commodetto/parseBMF";
 import parseRLE from "commodetto/parseRLE";
 import Battery from "embedded:sensor/Battery";
+import Debug from "debug";
 
 const render = new Poco(screen);
 
@@ -37,26 +38,20 @@ const batteryReader = new Battery({});
 
 const KYUDO_INTERVAL_SEC = 10;
 
-let cachedBitmap = null;
+let currentBitmap = null;
 let cachedIdx = -1;
 
 function getKyudoBitmap(idx) {
-	if (idx === cachedIdx && cachedBitmap) return cachedBitmap;
-
-	// Frame changed: hand back the old bitmap for one more draw, then drop our
-	// reference so the GC destructor can free its native memory before the next
-	// call allocates the replacement (old + new must never coexist in RAM).
-	if (cachedBitmap) {
-		const prev = cachedBitmap;
-		cachedBitmap = null;
-		cachedIdx = idx; // next call: same idx, null bitmap → will allocate
-		return prev;
-	}
-
+	if (idx === cachedIdx) return currentBitmap;
+	// Drop old ref and force full GC so xs_Bitmap_destructor runs gbitmap_destroy
+	// before we allocate the new GBitmap — deterministic, not dependent on GC timing.
+	currentBitmap = null;
+	cachedIdx = -1;
+	Debug.gc();
 	try {
-		cachedBitmap = new Poco.PebbleBitmap(FRAME_RESOURCE_IDS[idx]);
+		currentBitmap = new Poco.PebbleBitmap(FRAME_RESOURCE_IDS[idx]);
 		cachedIdx = idx;
-		return cachedBitmap;
+		return currentBitmap;
 	} catch {
 		return null;
 	}
